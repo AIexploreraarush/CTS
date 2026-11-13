@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Catch the Square!</title>
+    <style>
+        body {
+            margin: 0;
+            background: #111;
+            color: #fff;
+            font-family: sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            overflow: hidden;
+        }
+        #score-board {
+            font-size: 24px;
+            margin-bottom: 10px;
+        }
+        canvas {
+            background: #222;
+            border: 4px solid #00ffcc;
+            box-shadow: 0 0 20px #00ffcc;
+            display: block;
+        }
+        #game-over-screen {
+            display: none;
+            position: absolute;
+            text-align: center;
+            background: rgba(0, 0, 0, 0.85);
+            padding: 30px;
+            border-radius: 10px;
+            border: 2px solid #ff0055;
+        }
+        button {
+            background: #ff0055;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            font-size: 18px;
+            cursor: pointer;
+            border-radius: 5px;
+            margin-top: 15px;
+        }
+        button:hover {
+            background: #ff3377;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="score-board">Score: <span id="score">0</span></div>
+    <canvas id="gameCanvas" width="400" height="500"></canvas>
+
+    <div id="game-over-screen" id="gameOverScreen">
+        <h1 style="color: #ff0055; margin: 0;">Game Over!</h1>
+        <p>You missed a square!</p>
+        <button onclick="resetGame()">Play Again</button>
+    </div>
+
+    <script>
+        const canvas = document.getElementById("gameCanvas");
+        const ctx = canvas.getContext("2d");
+        const scoreDisplay = document.getElementById("score");
+        const gameOverScreen = document.getElementById("game-over-screen");
+
+        // Player (Paddle) Settings
+        const player = {
+            x: 175,
+            y: 460,
+            width: 70,
+            height: 15,
+            speed: 8
+        };
+
+        // Falling Object Settings
+        const target = {
+            x: Math.random() * 370,
+            y: 0,
+            size: 25,
+            speed: 4
+        };
+
+        let score = 0;
+        let isGameOver = false;
+        let keys = {};
+
+        // Track user input
+        window.addEventListener("keydown", (e) => keys[e.key] = true);
+        window.addEventListener("keyup", (e) => keys[e.key] = false);
+
+        // Core Game Loop
+        function update() {
+            if (isGameOver) return;
+
+            // Move player left/right
+            if ((keys["ArrowLeft"] || keys["a"]) && player.x > 0) {
+                player.x -= player.speed;
+            }
+            if ((keys["ArrowRight"] || keys["d"]) && player.x < canvas.width - player.width) {
+                player.x += player.speed;
+            }
+
+            // Move target downward
+            target.y += target.speed;
+
+            // Check for collision with paddle
+            if (
+                target.y + target.size >= player.y &&
+                target.x + target.size >= player.x &&
+                target.x <= player.x + player.width
+            ) {
+                score++;
+                scoreDisplay.textContent = score;
+                resetTarget();
+                // Gradually speed up the game to make it harder
+                target.speed += 0.3; 
+            }
+
+            // Check if target missed the paddle and hit bottom
+            if (target.y > canvas.height) {
+                endGame();
+            }
+
+            draw();
+            requestAnimationFrame(update);
+        }
+
+        // Draw elements onto the canvas
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Draw player paddle
+            ctx.fillStyle = "#00ffcc";
+            ctx.fillRect(player.x, player.y, player.width, player.height);
+
+            // Draw falling target
+            ctx.fillStyle = "#ff0055";
+            ctx.fillRect(target.x, target.y, target.size, target.size);
+        }
+
+        function resetTarget() {
+            target.y = 0;
+            target.x = Math.random() * (canvas.width - target.size);
+        }
+
+        function endGame() {
+            isGameOver = true;
+            gameOverScreen.style.display = "block";
+        }
+
+        function resetGame() {
+            score = 0;
+            scoreDisplay.textContent = score;
+            target.speed = 4;
+            player.x = 175;
+            isGameOver = false;
+            gameOverScreen.style.display = "none";
+            resetTarget();
+            update();
+        }
+
+        // Start the game loop initially
+        update();
+    </script>
+</body>
+</html>
